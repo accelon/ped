@@ -90,8 +90,61 @@ const parseSCUrl=url=>{
     return url;
 }
 
+export const prolog=buf=>{
+    buf=buf.replace(/■ /g,'\n■ ').replace(/\n+/g,'\n')
+    .replace(/\]˚/g,'°]')  //should be part of markup
+    .replace(/ \. \^w/g,' .\n ^w').replace(/; \^w/g,';\n ^w') //extremely long line 6Kb reduced to 2Kb
+    .replace(/([ \)])\. \^l/g,'$1\.\n ^l')
+    .replace(/1\^sup\[st\] sg\. ?/,'^g#1sg ')
+    .replace(/1\^sup\[st\] pl\. ?/,'^g#1pl ')
+    .replace(/2\^sup\[nd\] sg\. ?/,'^g#2sg ')
+    .replace(/2\^sup\[nd\] pl\. ?/,'^g#2pl ')
+    .replace(/3\^sup\[rd\] sg\. ?/,'^g#3sg ')
+    .replace(/3\^sup\[rd\] pl\. ?/,'^g#3pl ')
+    .replace(/[Ee]xpl\^sup\[n\]/g,'^g#expl') //explanation
+    .replace(/[Ee]xpl\^sup\[n\.\]/g,'^g#expl .') //explanation
+    .replace(/[Ee]xpl\^sup\[d.\]/g,'^g#expld .') //explained.
+    .replace(/[Ee]xpl\^sup\[d]/g,'^g#expld') //explained
+    //grammar
+    .replace(/\bger\. ?/g,' ^g#ger ') //
+    .replace(/\^i\[voc\.\]/g,'^g#voc') //wrong markup
+    .replace(/\^i\[acc\.\]/g,'^g#acc') //accusative
+    .replace(/\^i\[nt\.\]/g,'^g#nt') //neuter
+    .replace(/\(act\./g,'(^g#act') //active , 可能有漏網因act 和 pass 都是單字
+    .replace(/\bpass\.\)/g,'^g#pass)') //pass , 可能有漏網
+
+    .replace(/\b[Ff]\. ?/g,'^g#f ') //feminine
+    .replace(/\b[Mm]\. ?/g,'^g#m ') //feminine
+    .replace(/\b[A]or\. ?/g,'^g#aor ') //aorist
+    .replace(/\b[Dd]er\. ?/g,'^g#der ') //derived
+    .replace(/\b[Ff]r\. ?/g,'^g#fr ') //from
+    .replace(/\b[Sk]k\. ?/g,'^g#sk ') //sanskrit
+    .replace(/\bBSk\. ?/g,'^g#bsk ') //Buddhist sanskrit
+    .replace(/\b[Nn]om\. ?/g,'^g#nom ') //naminative
+    .replace(/\b[Vv]oc\. ?/g,'^g#voc ') //vocative
+    .replace(/\b[Aa]cc\. ?/g,'^g#acc ') //accusative
+    .replace(/\b[Aa]dj\. ?/g,'^g#adj ') //adjective
+    .replace(/\b[Ll]oc\. ?/g,'^g#loc ') //locative
+    .replace(/\b[Nn]t\. ?/g,'^g#nt ') //neuter
+    .replace(/\b[Ss]g\. ?/g,'^g#sg ') //singluar
+    .replace(/\b[Pp]l\. ?/g,'^g#pl ') //plurar
+    .replace(/\b[Pp]rep\. ?/g,'^g#prep ') //preposition
+    .replace(/\b[Cc]aus\. ?/g,'^g#caus ') // causative
+    .replace(/\b[Cc]pd\. ?/g,'^g#cpd ') // compound
+    .replace(/\b[Qq]\.v\. ?/g,'^g#qv ') // quod vide (which see)
+    .replace(/\b[Cc]p\. ?/g,'^g#cp ') //compare to
+    .replace(/\bscil\. ?/g,'^g#scil ') //scilicet , namely
+    .replace(/\bsq. ?/g,'⊕') //scilicet , namely
+    return buf;
+}
 export const doInlineTag=(buf,ctx)=>{
     buf=buf.replace(/<i class='term'>(-?)<a href='\/define\/([^>]+)'>([^>]+)<\/a><\/i>/g,(m,dash,m1,m2)=>{
+        if (m1!==m2) {
+            console.log('define word unmatch',m1,m2);
+        }
+        return (dash||'')+'^w['+m1+']';
+    });
+    buf=buf.replace(/<a href='\/define\/([^>]+)'>([^>]+)<\/a>/g,(m,m1,m2)=>{
         if (m1!==m2) {
             console.log('define word unmatch',m1,m2);
         }
@@ -108,15 +161,23 @@ export const doInlineTag=(buf,ctx)=>{
     })
     buf=buf.replace(/<span class='ref'>([^>]+)<\/span> ?/g,(m,ref)=>{
         const cite=parsePEDCite(ref);
-        const book=cite.match(/([a-z0]+)/)
+        const book=cite.match(/([a-zA-Z0]+)/)
         // console.log(book)
+        if (cite==ref) {
+            console.log('cannot parse cite',cite)
+            if (book){
+                if (!ctx.ubooks[book[0]])ctx.ubooks[book[0]]=0;
+                ctx.ubooks[book[0]]++;
+    
+            }
+        }
         if (book) {
             if (!ctx.books[book[0]])ctx.books[book[0]]=0;
             ctx.books[book[0]]++;
         } else {
             console.log('error cite',cite)
         }
-        return '^pts#'+cite+' ';
+        return '^pts#'+cite.toLowerCase()+' ';
     })
     buf=buf.replace(/<span class='grammar'>([^>]+)<\/span> ?/g,(m,m1)=>{
         // if (!ctx.grammars[m1])   ctx.grammars[m1]=0;
@@ -138,7 +199,7 @@ export const doInlineTag=(buf,ctx)=>{
         //     return '^g['+m1+']';
         // }
         // return '^g#'+grammar+(space?'':' ');
-        return '^g#'+m1.replace('. ','.').replace(' ','.')+' ';
+        return '^g#'+m1.replace(/. ?/,'_').replace(' ','_').replace(/_$/,'')+' ';
     })
     buf=buf.replace(/<span class='inline-li'>(\d+)<\/span>/g,(m,m1)=>{
         const n=parseInt(m1);
@@ -147,9 +208,22 @@ export const doInlineTag=(buf,ctx)=>{
         } else {
             console.log('inline-li too big',m1)
         }
-
     })
-    buf=buf.replace(/<i class='term'>([^>]+)<\/i>/g,'^l[$1]');
-    buf=buf.replace(/<i'>([^>]+)<\/i>/,'^i[$1]');
+    buf=buf.replace(/<i class='term'>([^>]+)<\/i>/g,(m,m1)=>'^l['+m1.replace('˚','°')+']');
+    buf=buf.replace(/<i>([^>]+)<\/i>/g,(m,m1)=>{
+        if (m1.indexOf('˚')>-1 || m1[0]=='-') {
+            return '^l['+m1.replace('˚','°')+']'; //expandable lemma,change to degree sign      
+        } else {
+            return '^i['+m1+']';
+        }
+    }); //also expandable
+    buf=buf.replace(/([\(\-,;\. ])˚([aāâiīuūûôenoṁṃcvkbdtphḍṭñṅṇsjgymrlḷ\-]+)/g,(m,prefix,m1)=>{
+        return prefix+'^le[°'+m1+']';
+        // (-˚xxx   (˚xxx (-xxx
+    })
+    buf=buf.replace(/([aāâiīuūûôenoṁṃcvkbdtphḍṭñṅṇsjgymrlḷ\-]+)˚/g,(m,m1)=>{
+        return '^le['+m1+'°]';
+    })
+
     return buf;
 }

@@ -21,8 +21,8 @@ const bookGroupGatha=(m,book,group,gatha)=>{
 	return book.toLowerCase()+"_"+(gatha)+"g"+romanToInt(group);
 }
 
-const bookVaggaVatthuGatha=(m,book,vagga,vatthu,gatha)=>{
-	return book.toLowerCase()+romanToInt(vagga)+"."+vatthu+"."+gatha;
+const bookVaggaVatthu=(m,book,vagga,vatthu)=>{
+	return book.toLowerCase()+romanToInt(vagga)+"."+vatthu;
 }
 const patterns=[
 	[/^(V)in\.([iv]{1,3})\.(\d+)/	, bookVolPage],
@@ -40,7 +40,7 @@ const patterns=[
 	//[/^(Pv-a)\.(\d+)/,bookPage],
 	//[/^(Vb)\.(\d+)/,bookPage],
 	
-	[/^(Pv|Cp)\.([iv]{1,3})\.(\d+)#(\d+)/,bookVaggaVatthuGatha],
+	[/^(Pv|Cp)\.([ixv]{1,3})\.(\d+)/,bookVaggaVatthu],
 	[/^Snp\.(\d+)/,"snp-$1g1"],
 	[/^Dhp\.(\d+)/,"dhp-$1"],
 	[/^Vv\.(\d+)#(\d+)/,"vv$1.$2"],
@@ -49,10 +49,17 @@ const patterns=[
 	[/^Th([ai])g\.(\d+)/,"th$1g_$2"],
 	[/^Th([ai])g-a\.(\d+)/,"th$1g0a_$2"],
 	[/^Cnd\.(\d+)/,"cnd-$1"],
-	[/^Mhvs\.(\d+)/,"mv-$1"],
+	[/^Mhvs\.(\d+)/,"mhvs-$1"],//Mahavaqsa
+	[/^Mhbv\.(\d+)/,"mhbv-$1"],//Mahabodhi-vamsa
 	[/^Ds\.(\d+)/,"ds-$1"],
-	[/^Divy\.(\d+)/,"divy-$1"],
+	[/^Divy\.(\d+)/,"divy-$1"],//Divyavadana, ed. Cowell & Neiil, Cambridge 1886. (Divy).
 	[/^Kp-a\.(\d+)/,"kp0a-$1"],
+	[/^Sdhp\.(\d+)/,"sdhp-$1"],//Saddhammopayana
+	//dhtp , dhtm Dhatupatha & Dhatumanjusa
+	//tikp Tikapatth&na
+	//jtm Jataka-mala pdf19
+	//Dpvs Dipavamsa
+	
 ]
 export const parsePEDCite=cite=>{
 	for (var i=0;i<patterns.length;i++) {

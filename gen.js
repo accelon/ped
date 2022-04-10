@@ -2,7 +2,7 @@ import { walkDOMOfftext,DOMFromString,xpath } from 'pitaka/xmlparser';
 import { sortObj } from 'pitaka/utils';
 import {readTextContent, nodefs ,patchBuf, writeChanged} from 'pitaka/cli'
 import Errata from './errata.js'
-import {onOpen,onClose,doInlineTag,onText} from './handler.js'
+import {onOpen,onClose,doInlineTag,onText,prolog} from './handler.js'
 await nodefs;
 const srcfolder='dictionaries/';
 const desfolder='off/';
@@ -23,10 +23,12 @@ let errata=Errata[inputfn];
 if (typeof errata=='string') errata=Errata[errata];
 const json=JSON.parse( patchBuf(rawcontent, errata ));
 const outcontent=[];
-const ctx={started:true,cites:[],onText,grammars:{}, liststack:[] , books:{}};
+const words=[];
+const ctx={started:true,cites:[],onText,grammars:{}, liststack:[] , books:{}, ubooks:{}};
 for (let i=0;i<json.length;i++) {
     const entry=json[i];
     ctx.word=entry.word;
+    words.push(ctx.word);
     const xml=doInlineTag(entry.text.replace(/<br>/g,'<br/>').replace(/\&/g,'&amp;'),ctx);
     // const debug=entry.word=='veṭṭhadīpaka';
     const dom=DOMFromString(xml);
@@ -42,19 +44,13 @@ for (let i=0;i<json.length;i++) {
 }
 // console.log( sortObj(ctx.grammars))
 const outfn=desfolder+inputfn.replace('.json','.off');
-let s=outcontent.join('\n');
-s=s.replace(/■ /g,'\n■ ').replace(/\n+/g,'\n')
-.replace(/ \. \^w/g,' .\n ^w').replace(/; \^w/g,';\n ^w') //extremely long line 6Kb reduced to 2Kb
-.replace(/1\^sup[st] sg\. ?/,'^g#1sg ')
-.replace(/1\^sup[st] pl\. ?/,'^g#1pl ')
-.replace(/2\^sup[nd] sg\. ?/,'^g#2sg ')
-.replace(/2\^sup[nd] pl\. ?/,'^g#2pl ')
-.replace(/3\^sup[rd] sg\. ?/,'^g#3sg ')
-.replace(/3\^sup[rd] pl\. ?/,'^g#3pl ')
+let s=prolog(outcontent.join('\n'));
 
-// if (writeChanged(outfn,s)) {
-//     console.log('written',outfn,s.length)
-// }
+if (writeChanged(outfn,s)) {
+    console.log('written',outfn,s.length)
+}
+//₧
 // writeChanged('sc-pts-cite.txt',ctx.cites.join('\n'));
-const books=sortObj(ctx.books);
-writeChanged('cite-books.txt',books.join('\n'));
+// const books=sortObj(ctx.ubooks);
+// writeChanged('cite-ubooks.txt',books.join('\n'));
+// writeChanged('words.txt.org',words.join('\n'));

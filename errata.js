@@ -23,7 +23,16 @@ export  default {
         ['Vv-a 118','Vv-a.118'],
 //sc typo
         ["<span class='grammar'>adjverb</span>","<span class='grammar'>adverb</span>"], //178b ubhayattha
-
+ //parse errar wrong id
+ //id='panunna (Paṇunna
+ //id='brāhmañña. brāhmaññatā
+ // id mana(s)
+ //sajju, sajjukaṁ, sajju
+ //rumma rummin rumma
+        
+//pts problem
+        ["<span class='grammar'>adj. f. scil. pannā</span>","<span class='grammar'>adj. f.</span> scil. pannā"],
+        ["<span class='grammar'>adj. in sense of collect. neuter</span>","<span class='grammar'>adj</span> in sense of collect. <span class='grammar'>neuter</span>"],
 //markup errors
         ['<sup>2;</sup>','<sup>2</sup>;'],
         ["pv36/pli/ms'>Pv.36</a><sup>5 2</sup>","pv36/pli/ms#52.1'>Pv:36.52</a>"],
